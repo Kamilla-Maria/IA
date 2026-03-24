@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu Agente IA</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <h2>🌸 Hello Kitty AI</h2>
+        
+        <div class="model-selection">
+            <h3>Escolha seu modelo de IA:</h3>
+            <table class="model-table">
+                <thead>
+                    <tr>
+                        <th>Modelo</th>
+                        <th>Descrição</th>
+                        <th>Selecionar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Gemini 1.5 Flash</td>
+                        <td>Rápido e eficiente para tarefas gerais</td>
+                        <td><button onclick="selectModel('gemini-1.5-flash')">Selecionar</button></td>
+                    </tr>
+                    <tr>
+                        <td>Gemini 1.5 Pro</td>
+                        <td>Mais avançado, ideal para análises complexas</td>
+                        <td><button onclick="selectModel('gemini-1.5-pro')">Selecionar</button></td>
+                    </tr>
+                    <tr>
+                        <td>Gemini 2.0 Flash</td>
+                        <td>Versão experimental mais recente</td>
+                        <td><button onclick="selectModel('gemini-2.0-flash-exp')">Selecionar</button></td>
+                    </tr>
+                    <tr>
+                        <td>Gemini 3.0 Flash Preview</td>
+                        <td>Prévia da próxima geração, ultra-rápida</td>
+                        <td><button onclick="selectModel('gemini-3-flash-preview')">Selecionar</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>Modelo selecionado: <span id="selected-model">gemini-pro</span></p>
+        </div>
+        
+        <div id="chat-messages" class="chat-messages">
+            <div class="message bot-message">
+                <div class="message-content">Olá! Sou a Hello Kitty, sua assistente fofinha! Como posso ajudar hoje? 😊</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="input-container">
+        <input type="text" id="pergunta" placeholder="O que você quer perguntar para a Hello Kitty? 💕">
+        <button onclick="enviar()">Enviar</button>
+    </div>
+
+    <script>
+        let selectedModel = 'gemini-pro'; // Modelo padrão
+
+        function selectModel(model) {
+            selectedModel = model;
+            document.getElementById('selected-model').textContent = model;
+            // Opcional: feedback visual
+            alert(`Modelo ${model} selecionado!`);
+        }
+
+        async function enviar() {
+            const input = document.getElementById('pergunta');
+            const chatMessages = document.getElementById('chat-messages');
+            
+            if (!input.value.trim()) return alert("Digite algo!");
+
+            // Adicionar mensagem do usuário
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user-message';
+            userMessage.innerHTML = `<div class="message-content">${input.value}</div>`;
+            chatMessages.appendChild(userMessage);
+
+            const userInput = input.value;
+            input.value = '';
+
+            // Adicionar mensagem de "pensando" do bot
+            const botThinking = document.createElement('div');
+            botThinking.className = 'message bot-message';
+            botThinking.innerHTML = `<div class="message-content">Pensando... 🤔</div>`;
+            chatMessages.appendChild(botThinking);
+
+            // Scroll para o final
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const response = await fetch('/perguntar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pergunta: userInput, modelo: selectedModel })
+                });
+                
+                const dados = await response.json();
+                
+                // Substituir a mensagem de pensando pela resposta
+                botThinking.innerHTML = `<div class="message-content">${dados.resposta}</div>`;
+            } catch (erro) {
+                botThinking.innerHTML = `<div class="message-content">Erro ao falar com a Hello Kitty!</div>`;
+            }
+
+            // Scroll para o final novamente
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Permitir enviar com Enter
+        document.getElementById('pergunta').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                enviar();
+            }
+        });
+    </script>
+</body>
+</html>
