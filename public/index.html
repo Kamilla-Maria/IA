@@ -24,26 +24,21 @@
                     <tr>
                         <td>Gemini 1.5 Flash</td>
                         <td>Rápido e eficiente para tarefas gerais</td>
-                        <td><button onclick="selectModel('gemini-1.5-flash')">Selecionar</button></td>
+                        <td><button onclick="selectModel('gemini-2.5-flash')">Selecionar</button></td>
                     </tr>
                     <tr>
                         <td>Gemini 1.5 Pro</td>
                         <td>Mais avançado, ideal para análises complexas</td>
-                        <td><button onclick="selectModel('gemini-1.5-pro')">Selecionar</button></td>
+                        <td><button onclick="selectModel('gemini-2.5-pro')">Selecionar</button></td>
                     </tr>
                     <tr>
-                        <td>Gemini 2.0 Flash</td>
-                        <td>Versão experimental mais recente</td>
-                        <td><button onclick="selectModel('gemini-2.0-flash-exp')">Selecionar</button></td>
-                    </tr>
-                    <tr>
-                        <td>Gemini 3.0 Flash Preview</td>
-                        <td>Prévia da próxima geração, ultra-rápida</td>
-                        <td><button onclick="selectModel('gemini-3-flash-preview')">Selecionar</button></td>
+                        <td>Gemini 1.0 Pro</td>
+                        <td>Modelo clássico e estável</td>
+                        <td><button onclick="selectModel('gemini-1.0-pro')">Selecionar</button></td>
                     </tr>
                 </tbody>
             </table>
-            <p>Modelo selecionado: <span id="selected-model">gemini-pro</span></p>
+            <p>Modelo selecionado: <span id="selected-model">gemini-2.5-flash</span></p>
         </div>
         
         <div id="chat-messages" class="chat-messages">
@@ -59,12 +54,11 @@
     </div>
 
     <script>
-        let selectedModel = 'gemini-pro'; // Modelo padrão
+        let selectedModel = 'gemini-1.5-flash'; 
 
         function selectModel(model) {
             selectedModel = model;
             document.getElementById('selected-model').textContent = model;
-            // Opcional: feedback visual
             alert(`Modelo ${model} selecionado!`);
         }
 
@@ -74,7 +68,6 @@
             
             if (!input.value.trim()) return alert("Digite algo!");
 
-            // Adicionar mensagem do usuário
             const userMessage = document.createElement('div');
             userMessage.className = 'message user-message';
             userMessage.innerHTML = `<div class="message-content">${input.value}</div>`;
@@ -83,13 +76,11 @@
             const userInput = input.value;
             input.value = '';
 
-            // Adicionar mensagem de "pensando" do bot
             const botThinking = document.createElement('div');
             botThinking.className = 'message bot-message';
             botThinking.innerHTML = `<div class="message-content">Pensando... 🤔</div>`;
             chatMessages.appendChild(botThinking);
 
-            // Scroll para o final
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
             try {
@@ -101,17 +92,20 @@
                 
                 const dados = await response.json();
                 
-                // Substituir a mensagem de pensando pela resposta
-                botThinking.innerHTML = `<div class="message-content">${dados.resposta}</div>`;
+                // CORREÇÃO DO UNDEFINED: Agora verificamos se deu sucesso ou erro!
+                if (dados.sucesso) {
+                    botThinking.innerHTML = `<div class="message-content">${dados.resposta}</div>`;
+                } else {
+                    botThinking.innerHTML = `<div class="message-content" style="color: red; font-weight: bold;">❌ ${dados.erro}</div>`;
+                }
+                
             } catch (erro) {
-                botThinking.innerHTML = `<div class="message-content">Erro ao falar com a Hello Kitty!</div>`;
+                botThinking.innerHTML = `<div class="message-content" style="color: red;">❌ Erro de conexão com o servidor!</div>`;
             }
 
-            // Scroll para o final novamente
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // Permitir enviar com Enter
         document.getElementById('pergunta').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 enviar();
