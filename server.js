@@ -35,38 +35,47 @@ const genAI = new GoogleGenerativeAI(apiKey);
 // Vamos usar o método POST, pois estamos ENVIANDO uma pergunta para o servidor
 app.post('/api/chat', async (req, res) => {
     try {
-        const { pergunta } = req.body;
-        if (!pergunta) return res.status(400).json({ erro: "Envie uma pergunta." });
+        // Capturamos 'message' e 'modelo' do corpo da requisição
+        const { message, modelo } = req.body; 
+        
+        // Define um modelo padrão caso o front-end não envie um válido
+        const modeloParaUsar = modelo || "gemini-1.5-flash";
 
-        // 1. Salva a pergunta do usuário no Banco de Dados
-        await Mensagem.create({ role: "user", parts: [{ text: pergunta }] });
+        if (!message) return res.status(400).json({ erro: "Envie uma mensagem." });
 
-        // 2. Busca o histórico de conversas no Banco (limitado às últimas 20 mensagens)
-        // Ocultamos o ID e a data, pois o Gemini só quer saber de 'role' e 'parts'
+        // 1. Salva a pergunta do usuário no Banco
+        await Mensagem.create({ role: "user", parts: [{ text: message }] });
+
+        // 2. Busca o histórico (últimas 20)
         const historico = await Mensagem.find()
                                         .select('role parts -_id') 
                                         .sort({ dataHora: 1 })
                                         .limit(20);
 
-        // 3. Inicia o chat do Gemini, ENVIANDO O HISTÓRICO JUNTO!
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const chat = model.startChat({
-            history: historico // O Gemini lê isso e "lembra" do que conversaram
+        // 3. Inicia o modelo escolhido dinamicamente
+        const model = genAI.getGenerativeModel({ 
+            model: modeloParaUsar,
+            // Mantendo a personalidade do seu Piá-bot (ajuste se for Hello Kitty)
+            systemInstruction: "Você é o ELO (Piá-bot), um assistente do IFPR Campus Assis. Use gírias paranaenses e seja amigável."
         });
 
-        // 4. Manda a nova pergunta para a IA
-        const result = await chat.sendMessage(pergunta);
+        const chat = model.startChat({
+            history: historico,
+        });
+
+        // 4. Manda a pergunta para a IA
+        const result = await chat.sendMessage(message);
         const respostaDaIA = result.response.text();
 
-        // 5. Salva a resposta da IA no Banco de Dados para uso futuro
+        // 5. Salva a resposta da IA no Banco
         await Mensagem.create({ role: "model", parts: [{ text: respostaDaIA }] });
 
-        // 6. Devolve a resposta para o Front-end
-        return res.status(200).json({ sucesso: true, resposta: respostaDaIA });
+        // 6. Responde ao Front-end
+        return res.status(200).json({ sucesso: true, reply: respostaDaIA });
 
     } catch (erro) {
-        console.error("❌ Erro:", erro);
-        return res.status(500).json({ erro: "Amnésia do servidor. Erro interno." });
+        console.error("❌ Erro no servidor:", erro);
+        return res.status(500).json({ erro: "Erro ao processar sua pergunta." });
     }
 });
 
