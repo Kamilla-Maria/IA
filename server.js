@@ -39,7 +39,7 @@ app.post('/api/chat', async (req, res) => {
         const { message, modelo } = req.body; 
         
         // Define um modelo padrão caso o front-end não envie um válido
-        const modeloParaUsar = modelo || "gemini-1.5-flash";
+        const modeloParaUsar = modelo || "gemini-2.5-flash";
 
         if (!message) return res.status(400).json({ erro: "Envie uma mensagem." });
 
