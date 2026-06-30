@@ -12,6 +12,7 @@ console.log("DEBUG: O link do banco carregado é:", process.env.MONGO_URI);
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use(express.static('public'));
 
 // 3. CONEXÃO COM O BANCO
 if (!process.env.MONGO_URI) {
