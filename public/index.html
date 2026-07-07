@@ -4,12 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IA Hello Kitty</title>
-    <!-- PASSO 1: Adicionar a biblioteca Marked.js para ler negrito/listas/códigos -->
+    <title>Hello Kitty Game Master 🎮</title>
+    <!-- Marked.js para formatar as respostas da IA (negrito, listas, etc) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        /* ... Seus estilos anteriores se mantêm ... */
         * {
             margin: 0;
             padding: 0;
@@ -29,21 +28,22 @@
         .container {
             background: linear-gradient(to bottom, #ffebf0 0%, #fff5f9 100%);
             border-radius: 30px;
-            box-shadow: 0 15px 50px rgba(255, 105, 180, 0.2), 0 0 0 1px rgba(255, 182, 193, 0.3);
+            box-shadow: 0 15px 50px rgba(255, 105, 180, 0.2);
             width: 100%;
             max-width: 600px;
             display: flex;
             flex-direction: column;
             height: 90vh;
-            max-height: 700px;
+            max-height: 750px;
             overflow: hidden;
             border: 3px solid #ffb6d9;
             position: relative;
         }
 
+        /* HEADER */
         .header {
             background: linear-gradient(135deg, #ff69b4 0%, #ff85c1 100%);
-            padding: 25px;
+            padding: 20px;
             text-align: center;
             border-bottom: 3px solid #ff1493;
             box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
@@ -51,48 +51,65 @@
 
         .header-title {
             color: white;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-            letter-spacing: 1px;
         }
 
-        .header-subtitle {
-            color: rgba(255, 255, 255, 0.95);
-            font-size: 14px;
-            margin-top: 5px;
-            font-weight: 300;
-        }
-
-        /* ESTILO DO BOTÃO LIMPAR */
-        .btn-limpar {
-            background: #ff4d6d;
-            color: white;
+        /* BOTÕES SUPERIORES */
+        .btn-top {
+            background: white;
+            color: #ff1493;
             border: none;
-            padding: 8px 15px;
+            padding: 8px 12px;
             border-radius: 15px;
             cursor: pointer;
             font-size: 12px;
+            font-weight: bold;
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 15px;
             transition: 0.3s;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
-        .btn-limpar:hover {
-            background: #ff1493;
-            transform: scale(1.05);
+        .btn-limpar { right: 15px; background: #ff4d6d; color: white; }
+        .btn-ranking { left: 15px; background: #ffd700; color: #555; }
+        .btn-top:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+        /* AREA DE IDENTIFICAÇÃO */
+        #setupPlayer {
+            padding: 15px;
+            background: #fff;
+            border-bottom: 2px dashed #ffb6d9;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
         }
 
+        #setupPlayer input {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 2px solid #ffc0e0;
+            outline: none;
+        }
+
+        #setupPlayer button {
+            background: #ff69b4;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        /* CHAT */
         .chat-container {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
-            gap: 15px;
             display: flex;
             flex-direction: column;
-            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 240, 247, 0.8));
+            background: rgba(255, 255, 255, 0.4);
         }
 
         .message {
@@ -101,36 +118,17 @@
             animation: fadeIn 0.3s ease-in;
         }
 
-        .message.user {
-            justify-content: flex-end;
-        }
-
-        .message.bot {
-            justify-content: flex-start;
-        }
-
+        .message.user { justify-content: flex-end; }
         .message-content {
             max-width: 80%;
             padding: 12px 16px;
             border-radius: 20px;
-            word-wrap: break-word;
-            line-height: 1.4;
             font-size: 14px;
-        }
-
-        /* Ajuste para o Markdown não bugar o visual */
-        .message-content p {
-            margin-bottom: 8px;
-        }
-
-        .message-content code {
-            background: rgba(0, 0, 0, 0.1);
-            padding: 2px 4px;
-            border-radius: 4px;
+            line-height: 1.4;
         }
 
         .message.user .message-content {
-            background: linear-gradient(135deg, #ff69b4 0%, #ff85c1 100%);
+            background: #ff69b4;
             color: white;
             border-bottom-right-radius: 5px;
         }
@@ -142,27 +140,24 @@
             border-bottom-left-radius: 5px;
         }
 
+        /* INPUT AREA */
         .input-section {
             padding: 20px;
             border-top: 2px solid #ffb6d9;
             display: flex;
             gap: 10px;
+            background: white;
         }
 
         .input-wrapper {
             flex: 1;
-            background: white;
+            background: #f9f9f9;
             border-radius: 25px;
             border: 2px solid #ffc0e0;
             padding: 10px 20px;
         }
 
-        #messageInput {
-            width: 100%;
-            border: none;
-            outline: none;
-        }
-
+        #messageInput { width: 100%; border: none; outline: none; background: transparent; }
         .send-btn {
             background: #ff69b4;
             color: white;
@@ -171,149 +166,185 @@
             height: 45px;
             border-radius: 50%;
             cursor: pointer;
+            font-size: 20px;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* MODAL DE RANKING */
+        #rankingModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
         }
+
+        .ranking-card {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 25px;
+            padding: 25px;
+            border: 4px solid #ff69b4;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ffe4f0;
+            font-weight: 500;
+        }
+
+        .ranking-item:first-child { color: #d4af37; font-size: 1.2em; font-weight: bold; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 
 <body>
+
     <div class="container">
-        <!-- BOTÃO DE LIMPAR -->
-        <button class="btn-limpar" onclick="limparConversa()">🗑️ Limpar</button>
+        <!-- Botões -->
+        <button class="btn-top btn-ranking" onclick="verRanking()">🏆 Ranking</button>
+        <button class="btn-top btn-limpar" onclick="limparConversa()">🗑️ Reset</button>
 
         <div class="header">
-            <div class="bow-decoration">🎀</div>
-            <div class="header-title">IA Hello Kitty</div>
-            <div class="header-subtitle">Sua assistente delicada 💕</div>
+            <div class="header-title">Hello Kitty GM 🎀</div>
+        </div>
+
+        <!-- Fase 1: Identificando o Jogador -->
+        <div id="setupPlayer">
+            <input type="text" id="nicknameInput" placeholder="Seu apelido..." autocomplete="off">
+            <button onclick="salvarNickname()">Entrar no Jogo</button>
         </div>
 
         <div class="chat-container" id="chatContainer">
-            <div class="empty-state">
-                <div class="empty-state-icon">🎀</div>
-                <div class="empty-state-text">Olá! Vamos conversar? 💕</div>
+            <div style="text-align: center; color: #ff69b4; margin-top: 20px;">
+                Crie um nickname para começar o desafio de charadas! 💕
             </div>
         </div>
 
         <div class="input-section">
             <div class="input-wrapper">
-                <input type="text" id="messageInput" placeholder="Digite aqui..." autocomplete="off">
+                <input type="text" id="messageInput" placeholder="Responda a charada..." autocomplete="off" disabled>
             </div>
-            <button class="send-btn" id="sendBtn">↑</button>
+            <button class="send-btn" id="sendBtn" disabled>↑</button>
+        </div>
+    </div>
+
+    <!-- Modal do Hall da Fama -->
+    <div id="rankingModal" onclick="this.style.display='none'">
+        <div class="ranking-card" onclick="event.stopPropagation()">
+            <h2 style="text-align: center; color: #ff69b4; margin-bottom: 15px;">🥇 Hall da Fama</h2>
+            <div id="rankingList">
+                <!-- Preenchido via JS -->
+            </div>
+            <button onclick="document.getElementById('rankingModal').style.display='none'" 
+                    style="width: 100%; margin-top: 15px; padding: 10px; border-radius: 15px; border: none; background: #ff69b4; color: white; cursor: pointer;">
+                Voltar ao Jogo
+            </button>
         </div>
     </div>
 
     <script>
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const chatContainer = document.getElementById('chatContainer');
-    let isFirstMessage = true;
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatContainer = document.getElementById('chatContainer');
+        let userNickname = "";
 
-    // Função para adicionar mensagens na tela (com Markdown)
-    function addMessage(content, isUser = false) {
-        if (isFirstMessage) {
-            chatContainer.innerHTML = '';
-            isFirstMessage = false;
+        // Salva o nickname e libera o chat
+        function salvarNickname() {
+            const nick = document.getElementById('nicknameInput').value.trim();
+            if (nick.length < 3) {
+                alert("Escolha um nickname com pelo menos 3 letras! 🎀");
+                return;
+            }
+            userNickname = nick;
+            document.getElementById('setupPlayer').innerHTML = `<h3>Boa sorte, <b>${userNickname}</b>! ✨</h3>`;
+            messageInput.disabled = false;
+            sendBtn.disabled = false;
+            addMessage("Olá! Sou sua Game Master. Está pronto para uma charada de tecnologia? Vale 50 XP!", false);
         }
 
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+        // Adiciona mensagens na tela
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
 
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
 
-        if (isUser) {
-            contentDiv.textContent = content;
-        } else {
-            // MÁGICA: Converte Markdown para HTML
-            contentDiv.innerHTML = marked.parse(content);
+            if (isUser) {
+                contentDiv.textContent = content;
+            } else {
+                contentDiv.innerHTML = marked.parse(content);
+            }
+
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        messageDiv.appendChild(contentDiv);
-        chatContainer.appendChild(messageDiv);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+        // Envia mensagem para o Back-end (Enviando Nickname junto!)
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
 
-    // Função para Limpar o Banco (Reset de Memória)
-    async function limparConversa() {
-        if (confirm("Deseja apagar toda a nossa conversa? 🎀")) {
+            addMessage(message, true);
+            messageInput.value = '';
+
             try {
                 const response = await fetch('/api/chat', {
-                    method: 'DELETE' 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, nickname: userNickname }) // MANDANDO O NICK
                 });
-                
+
+                const data = await response.json();
                 if (response.ok) {
-                    chatContainer.innerHTML = '<div class="empty-state">Memória limpa! Vamos começar de novo? 💕</div>';
-                    isFirstMessage = true;
+                    addMessage(data.resposta, false);
                 }
             } catch (error) {
-                alert("Erro ao limpar a conversa.");
+                addMessage('Erro de conexão. 🎀', false);
             }
         }
-    }
 
-    // Função para Enviar Mensagem
-    async function sendMessage() {
-        const message = messageInput.value.trim();
-        if (!message) return;
+        // Fase 4 & 5: Hall da Fama
+        async function verRanking() {
+            const modal = document.getElementById('rankingModal');
+            const list = document.getElementById('rankingList');
+            modal.style.display = 'flex';
+            list.innerHTML = "Carregando...";
 
-        addMessage(message, true);
-        messageInput.value = '';
-        showLoading();
+            try {
+                const response = await fetch('/api/chat/ranking');
+                const jogadores = await response.json();
 
-        try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
-            });
-
-            removeLoading();
-            const data = await response.json();
-
-            if (response.ok) {
-                // Exibe a resposta da IA (reply ou resposta)
-                addMessage(data.reply || data.resposta, false);
-            } else {
-                addMessage('Ops! Ocorreu um erro. Tente novamente! 🎀', false);
+                list.innerHTML = jogadores.map((p, index) => `
+                    <div class="ranking-item">
+                        <span>${index === 0 ? '🥇' : index + 1 + 'º'} ${p.nickname}</span>
+                        <span>${p.xp} XP</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = "Erro ao carregar ranking.";
             }
-        } catch (error) {
-            removeLoading();
-            addMessage('Erro de conexão com o servidor. 🎀', false);
-            console.error(error);
         }
-    }
 
-    function showLoading() {
-        const div = document.createElement('div');
-        div.className = 'message bot';
-        div.id = 'loadingMessage';
-        div.innerHTML = '<div class="message-content">Digitando... 🎀</div>';
-        chatContainer.appendChild(div);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+        // Limpar histórico
+        async function limparConversa() {
+            if (confirm("Resetar nossa conversa? 🎀")) {
+                await fetch('/api/chat/limpar', { method: 'DELETE' });
+                location.reload();
+            }
+        }
 
-    function removeLoading() {
-        const load = document.getElementById('loadingMessage');
-        if (load) load.remove();
-    }
-
-    // Eventos de clique e teclado
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
-</script>
+        // Eventos
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+    </script>
 </body>
 
 </html>
