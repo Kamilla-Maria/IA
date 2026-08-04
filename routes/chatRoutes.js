@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const chatController = require('../controllers/chatController');
+const autenticarToken = require('../middlewares/authMiddleware'); // Importa o segurança
 
-// Rota 1: Conversar (POST /api/chat)
-router.post('/', chatController.falarComIA);
+// PROTEGENDO AS ROTAS:
+// Agora, para falar com a IA ou ver o ranking, o token é OBRIGATÓRIO
+router.post('/', autenticarToken, chatController.falarComIA);
+router.get('/ranking', autenticarToken, chatController.obterRanking);
 
-// Rota 2: Ranking (GET /api/chat/ranking)
-router.get('/ranking', chatController.obterRanking);
-
-// Rota 3: Limpar (DELETE /api/chat/limpar)
-router.delete('/limpar', chatController.limparHistorico);
+// A rota de limpar também deve ser protegida
+router.delete('/limpar', autenticarToken, chatController.limparHistorico);
 
 module.exports = router;
