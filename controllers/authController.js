@@ -1,64 +1,47 @@
 const Usuario = require('../models/Usuario');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
-// Cadastro de Novo Usuário
 exports.registrar = async (req, res) => {
     try {
         const { nome, email, senha } = req.body;
 
-        // 1. Verificar se o usuário já existe
-        const usuarioExiste = await Usuario.findOne({ email });
-        if (usuarioExiste) {
-            return res.status(400).json({ erro: "Este e-mail já está cadastrado." });
+        // Verifica se o e-mail já existe
+        const usuarioExistente = await Usuario.findOne({ email });
+        if (usuarioExistente) {
+            return res.status(400).json({ erro: "E-mail já cadastrado!" });
         }
 
-        // 2. Criar novo usuário (a criptografia acontece no Model/Usuario.js)
-        const novoUsuario = await Usuario.create({ nome, email, senha });
+        // Cria o usuário
+        const novoUsuario = new Usuario({ nome, email, senha });
+        await novoUsuario.save();
 
-        res.status(201).json({
-            sucesso: true,
-            mensagem: "Usuário registrado com sucesso! 🎀"
-        });
-
+        res.status(201).json({ sucesso: true, mensagem: "Usuário criado!" });
     } catch (error) {
-        res.status(500).json({ erro: "Erro ao registrar usuário.", detalhes: error.message });
+        console.error("ERRO NO REGISTRO:", error); // Isso vai aparecer no seu terminal!
+        res.status(500).json({ erro: "Erro interno ao cadastrar." });
     }
 };
 
-// Login do Usuário
 exports.login = async (req, res) => {
     try {
         const { email, senha } = req.body;
-
-        // 1. Buscar usuário e incluir a senha (que está como select: false no model)
         const usuario = await Usuario.findOne({ email }).select('+senha');
-        
-        if (!usuario) {
-            return res.status(401).json({ erro: "E-mail ou senha incorretos." });
-        }
 
-        // 2. Comparar a senha digitada com a criptografada
-        const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
-        if (!senhaCorreta) {
-            return res.status(401).json({ erro: "E-mail ou senha incorretos." });
-        }
+        if (!usuario) return res.status(401).json({ erro: "E-mail ou senha inválidos." });
 
-        // 3. Gerar o "Crachá Digital" (JWT)
-        // O Token expira em 24h para segurança
+        const senhaOk = await bcrypt.compare(senha, usuario.senha);
+        if (!senhaOk) return res.status(401).json({ erro: "E-mail ou senha inválidos." });
+
         const token = jwt.sign(
             { id: usuario._id, nome: usuario.nome },
-            process.env.JWT_SECRET,
+            process.env.JWT_SECRET || 'secreto_temporario',
             { expiresIn: '24h' }
         );
 
-        res.json({
-            sucesso: true,
-            nome: usuario.nome,
-            token: token
-        });
-
+        res.json({ token, nome: usuario.nome });
     } catch (error) {
-        res.status(500).json({ erro: "Erro ao realizar login." });
+        console.error("ERRO NO LOGIN:", error);
+        res.status(500).json({ erro: "Erro interno no servidor." });
     }
 };

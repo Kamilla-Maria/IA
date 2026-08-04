@@ -2,44 +2,25 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const UsuarioSchema = new mongoose.Schema({
-    nome: {
-        type: String,
-        required: [true, 'O nome é obrigatório']
-    },
-    email: {
-        type: String,
-        required: [true, 'O email é obrigatório'],
-        unique: true,
-        lowercase: true,
-        trim: true
-    },
-    senha: {
-        type: String,
-        required: [true, 'A senha é obrigatória'],
-        select: false // Por segurança, não retorna a senha em consultas por padrão
-    },
-    dataCriacao: {
-        type: Date,
-        default: Date.now
-    }
+    nome: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    senha: { type: String, required: true, select: false }
 });
 
-// --- SEGURANÇA (MIDDLEWARE) ---
-// Antes de salvar no banco, transformamos a senha em um Hash Criptográfico
-UsuarioSchema.pre('save', async function(next) {
-    // Se a senha não foi modificada (ex: mudou apenas o nome), pula para o próximo passo
-    if (!this.isModified('senha')) return next();
+// Criptografa a senha antes de salvar
+UsuarioSchema.pre('save', async function() {
+    // Se a senha não foi mexida, não faz nada e sai
+    if (!this.isModified('senha')) return;
 
     try {
-        // Gera um "sal" (salt) aleatório para fortalecer o hash
+        // Gera o "sal" (salt)
         const salt = await bcrypt.genSalt(10);
-        
-        // Substitui a senha original pela versão criptografada
+        // Criptografa a senha e substitui o texto puro pelo hash
         this.senha = await bcrypt.hash(this.senha, salt);
         
-        next();
-    } catch (error) {
-        next(error);
+        // REPARE: Não usamos mais o next() aqui dentro quando a função é async!
+    } catch (err) {
+        throw err; // Se der erro, o Mongoose captura automaticamente
     }
 });
 
