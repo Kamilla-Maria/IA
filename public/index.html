@@ -1,72 +1,458 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hello Kitty Game Master 🎀</title>
+
+    <!-- Markdown para formatar respostas da IA -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <style>
-        /* [Mantendo seu estilo original e adicionando o novo] */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #fff0f7; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: white; width: 95%; max-width: 600px; height: 90vh; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; border: 4px solid #ffb6d9; position: relative; }
-        .header { background: #ff69b4; padding: 20px; text-align: center; color: white; }
-        .chat-container { flex: 1; overflow-y: auto; padding: 20px; background: #fffafa; display: flex; flex-direction: column; gap: 10px; }
-        .message { display: flex; margin-bottom: 10px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #fff0f7 0%, #ffe4f0 50%, #ffd9eb 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- TELA DE AUTENTICAÇÃO (LOGIN / CADASTRO) --- */
+        #authOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #ff69b4 0%, #ffc0e0 100%);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-card {
+            background: white;
+            padding: 35px;
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 380px;
+            text-align: center;
+        }
+
+        .auth-card h2 {
+            color: #ff1493;
+            margin-bottom: 15px;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid #ffc0e0;
+            border-radius: 15px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 12px;
+            background: #ff69b4;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+
+        .btn-auth:hover {
+            background: #ff1493;
+        }
+
+        .toggle-link {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .toggle-link span {
+            color: #ff1493;
+            cursor: pointer;
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- CONTAINER DO CHAT --- */
+        .container {
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(255, 105, 180, 0.25);
+            width: 95%;
+            max-width: 600px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 4px solid #ffb6d9;
+            position: relative;
+        }
+
+        .header-btns {
+            position: absolute;
+            top: 12px;
+            width: 100%;
+            padding: 0 15px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .btn-top {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+
+        .btn-rank { background: #ffcc00; color: #444; }
+        .btn-clr { background: #ff85c1; }
+        .btn-out { background: #ff4d6d; }
+
+        .header {
+            background: linear-gradient(135deg, #ff69b4 0%, #ff85c1 100%);
+            padding: 40px 20px 15px;
+            text-align: center;
+            color: white;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #fffafa;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            display: flex;
+        }
+
         .message.user { justify-content: flex-end; }
-        .message-content { max-width: 80%; padding: 12px; border-radius: 15px; font-size: 14px; line-height: 1.5; }
-        .user .message-content { background: #ff69b4; color: white; }
-        .bot .message-content { background: white; border: 2px solid #ffc0e0; color: #d1486a; }
-        .input-section { padding: 15px; background: white; display: flex; gap: 10px; align-items: center; border-top: 2px solid #ffebf0; }
-        .input-wrapper { flex: 1; background: #fdf2f7; border-radius: 20px; padding: 8px 15px; border: 2px solid #ffc0e0; }
-        input { width: 100%; border: none; outline: none; background: transparent; }
-        .btn { background: #ff69b4; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 20px; }
-        #previewContainer { display: none; padding: 10px; background: white; text-align: center; border-top: 2px solid #ffc0e0; }
-        #previewImg { max-height: 80px; border-radius: 10px; }
-        .hidden { display: none !important; }
-        #authOverlay { position: fixed; inset: 0; background: #ff69b4; z-index: 1000; display: flex; justify-content: center; align-items: center; }
-        .auth-card { background: white; padding: 30px; border-radius: 20px; text-align: center; width: 300px; }
+        .message.bot { justify-content: flex-start; }
+
+        .message-content {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .user .message-content {
+            background: #ff69b4;
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .bot .message-content {
+            background: white;
+            border: 2px solid #ffc0e0;
+            color: #444;
+            border-bottom-left-radius: 2px;
+        }
+
+        #previewContainer {
+            display: none;
+            padding: 8px 15px;
+            background: #fff0f7;
+            text-align: left;
+            border-top: 1px solid #ffc0e0;
+        }
+
+        #previewImg {
+            max-height: 70px;
+            border-radius: 8px;
+            vertical-align: middle;
+        }
+
+        .input-section {
+            padding: 12px;
+            display: flex;
+            gap: 8px;
+            background: white;
+            border-top: 2px solid #ffebf0;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            background: #fdf2f7;
+            border-radius: 20px;
+            padding: 8px 15px;
+            border: 2px solid #ffc0e0;
+        }
+
+        #messageInput {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 14px;
+        }
+
+        .btn-circle {
+            background: #ff69b4;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- LUZ DO HEALTH CHECK (FASE 1) --- */
+        .health-indicator {
+            position: absolute;
+            bottom: 65px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #666;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 3px 8px;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            z-index: 5;
+            border: 1px solid #ffc0e0;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #bbb;
+        }
+
+        .dot.online { background-color: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
+        .dot.offline { background-color: #e74c3c; box-shadow: 0 0 5px #e74c3c; }
+
+        /* MODAL DE RANKING */
+        #rankingModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 20000;
+            justify-content: center;
+            align-items: center;
+        }
     </style>
 </head>
+
 <body>
 
+    <!-- TELA DE AUTENTICAÇÃO -->
     <div id="authOverlay">
         <div class="auth-card" id="loginForm">
-            <h2 style="color: #ff69b4">🎀 Login</h2>
-            <input type="email" id="loginEmail" placeholder="Email" style="border: 1px solid #ffc0e0; margin: 10px 0; padding: 10px; border-radius: 10px;">
-            <input type="password" id="loginSenha" placeholder="Senha" style="border: 1px solid #ffc0e0; margin: 10px 0; padding: 10px; border-radius: 10px;">
-            <button onclick="executarLogin()" style="background: #ff69b4; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; width: 100%;">Entrar</button>
+            <h2>🎀 Login</h2>
+            <input type="email" id="loginEmail" placeholder="Seu e-mail">
+            <input type="password" id="loginSenha" placeholder="Sua senha">
+            <button class="btn-auth" onclick="executarLogin()">Entrar</button>
+            <p class="toggle-link">Não tem conta? <span onclick="alternarAuth(true)">Cadastre-se</span></p>
+        </div>
+
+        <div class="auth-card hidden" id="registerForm">
+            <h2>✨ Cadastro</h2>
+            <input type="text" id="regNome" placeholder="Seu Nome">
+            <input type="email" id="regEmail" placeholder="Seu e-mail">
+            <input type="password" id="regSenha" placeholder="Crie uma senha">
+            <button class="btn-auth" onclick="executarCadastro()">Cadastrar</button>
+            <p class="toggle-link">Já tem conta? <span onclick="alternarAuth(false)">Fazer Login</span></p>
         </div>
     </div>
 
+    <!-- CONTAINER PRINCIPAL -->
     <div class="container">
+        <div class="header-btns">
+            <button class="btn-top btn-rank" onclick="verRanking()">🏆 Rank</button>
+            <button class="btn-top btn-clr" onclick="limparConversa()">🗑️ Reset</button>
+            <button class="btn-top btn-out" onclick="logout()">🚪 Sair</button>
+        </div>
+
         <div class="header">
-            <h3 id="txtBoasVindas">Hello Kitty Game Master 🎀</h3>
-            <button onclick="verRanking()" style="position: absolute; left: 10px; top: 10px; background: gold; border: none; border-radius: 5px; padding: 5px;">🏆 Rank</button>
-            <button onclick="logout()" style="position: absolute; right: 10px; top: 10px; background: #ff4d6d; border: none; border-radius: 5px; padding: 5px; color: white;">Sair</button>
+            <h3>Hello Kitty Game Master 🎀</h3>
+            <p id="txtBoasVindas" style="font-size: 13px; margin-top: 4px;">Faça login para conversar!</p>
         </div>
 
         <div class="chat-container" id="chatContainer"></div>
 
+        <!-- Preview da Imagem selecionada -->
         <div id="previewContainer">
-            <img id="previewImg" src="">
-            <button onclick="cancelarImg()" style="background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">X</button>
+            <img id="previewImg" src="" alt="preview">
+            <button onclick="cancelarImg()" style="background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; margin-left: 10px;">X</button>
+        </div>
+
+        <!-- Indicador de Saúde da API -->
+        <div class="health-indicator" id="healthStatus">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">Verificando...</span>
         </div>
 
         <div class="input-section">
-            <button class="btn" onclick="document.getElementById('fileInput').click()" style="background: #ff85c1;">📎</button>
+            <button class="btn-circle" onclick="document.getElementById('fileInput').click()" style="background: #ff85c1;" title="Enviar Imagem">📎</button>
             <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="mostrarPreview(this)">
+            
             <div class="input-wrapper">
-                <input type="text" id="messageInput" placeholder="Mensagem...">
+                <input type="text" id="messageInput" placeholder="Digite sua mensagem..." disabled>
             </div>
-            <button class="btn" onclick="sendMessage()">↑</button>
+            
+            <button class="btn-circle" id="sendBtn" onclick="sendMessage()" disabled>↑</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE RANKING -->
+    <div id="rankingModal" onclick="this.style.display='none'">
+        <div class="auth-card" onclick="event.stopPropagation()">
+            <h2 style="color: #ff69b4;">🥇 Hall da Fama</h2>
+            <div id="rankingList" style="margin: 15px 0; text-align: left; max-height: 200px; overflow-y: auto;"></div>
+            <button class="btn-auth" onclick="document.getElementById('rankingModal').style.display='none'">Fechar</button>
         </div>
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000';
-        let userNickname = "";
+        // Em produção na Vercel deixe ''; localmente pode ser '' ou 'http://localhost:3000'
+        const API_URL = '';
 
+        let userNickname = "";
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function alternarAuth(mostrarCadastro) {
+            document.getElementById('loginForm').classList.toggle('hidden', mostrarCadastro);
+            document.getElementById('registerForm').classList.toggle('hidden', !mostrarCadastro);
+        }
+
+        window.onload = () => {
+            checarSaudeAPI();
+            const token = localStorage.getItem('token_saas');
+            const nome = localStorage.getItem('user_nome');
+
+            if (token && nome) {
+                userNickname = nome;
+                entrarNoApp();
+                addMessage(`Bom te ver de novo, **${userNickname}**! ✨`, false);
+            }
+        };
+
+        function entrarNoApp() {
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('txtBoasVindas').innerText = `Bem-vinda(o), ${userNickname}! 💕`;
+            messageInput.disabled = false;
+            sendBtn.disabled = false;
+        }
+
+        // --- HEALTH CHECK (FASE 1) ---
+        async function checarSaudeAPI() {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+
+            try {
+                const res = await fetch(`${API_URL}/api/health`);
+                const data = await res.json();
+
+                if (res.ok && data.status === "ok") {
+                    dot.className = "dot online";
+                    text.innerText = "Sistema Operacional";
+                } else {
+                    dot.className = "dot offline";
+                    text.innerText = "API Instável";
+                }
+            } catch (err) {
+                dot.className = "dot offline";
+                text.innerText = "API Offline";
+            }
+        }
+
+        // --- AUTENTICAÇÃO ---
+        async function executarCadastro() {
+            const nome = document.getElementById('regNome').value;
+            const email = document.getElementById('regEmail').value;
+            const senha = document.getElementById('regSenha').value;
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, email, senha })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("Cadastro realizado! Faça login agora.");
+                    alternarAuth(false);
+                } else {
+                    alert(data.erro || "Erro no cadastro");
+                }
+            } catch (e) { alert("Erro de conexão ao cadastrar."); }
+        }
+
+        async function executarLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const senha = document.getElementById('loginSenha').value;
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    localStorage.setItem('token_saas', data.token);
+                    localStorage.setItem('user_nome', data.nome);
+                    userNickname = data.nome;
+                    entrarNoApp();
+                } else {
+                    alert(data.erro || "Falha no login");
+                }
+            } catch (e) { alert("Erro de conexão ao logar."); }
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.reload();
+        }
+
+        // --- ENVIO DE MENSAGENS E MULTIMODAL ---
         function mostrarPreview(input) {
             if (input.files[0]) {
                 const reader = new FileReader();
@@ -84,15 +470,14 @@
         }
 
         async function sendMessage() {
-            const text = document.getElementById('messageInput').value;
+            const text = messageInput.value.trim();
             const file = document.getElementById('fileInput').files[0];
             const token = localStorage.getItem('token_saas');
 
             if (!text && !file) return;
 
-            // UI local
             addMessage(text || "Enviou uma imagem", true, file ? document.getElementById('previewImg').src : null);
-            document.getElementById('messageInput').value = "";
+            messageInput.value = '';
             cancelarImg();
 
             try {
@@ -102,6 +487,7 @@
                     fd.append('image', file);
                     fd.append('prompt', text);
                     fd.append('nickname', userNickname);
+
                     res = await fetch(`${API_URL}/api/chat/vision`, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${token}` },
@@ -110,95 +496,79 @@
                 } else {
                     res = await fetch(`${API_URL}/api/chat`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
                         body: JSON.stringify({ message: text, nickname: userNickname })
                     });
                 }
+
+                if (res.status === 401) {
+                    logout();
+                    return;
+                }
+
                 const data = await res.json();
                 addMessage(data.resposta, false, data.imageUrl);
-            } catch (e) { addMessage("Erro 🎀", false); }
+            } catch (e) {
+                addMessage("Erro ao conversar com a Hello Kitty. 😢", false);
+            }
         }
-async function verRanking() {
-    const modal = document.getElementById('rankingModal');
-    const list = document.getElementById('rankingList');
-    const token = localStorage.getItem('token_saas');
 
-    // Mostra o modal e limpa a lista com um "Carregando"
-    modal.style.display = 'flex';
-    list.innerHTML = "<p style='text-align:center'>Carregando... 🎀</p>";
-
-    try {
-        const res = await fetch(`${API_URL}/api/chat/ranking`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        const jogadores = await res.json();
-
-        if (res.ok) {
-            // Cria a lista fofinha de jogadores
-            list.innerHTML = jogadores.map((p, i) => `
-                <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #ffe4f0; font-size: 14px;">
-                    <span>${i + 1}º <b>${p.nickname}</b></span>
-                    <span style="color: #ff69b4;">${p.xp} XP</span>
-                </div>
-            `).join('');
-            
-            if(jogadores.length === 0) list.innerHTML = "<p>Ninguém pontuou ainda! 🌸</p>";
-        } else {
-            list.innerHTML = "<p>Erro ao carregar o ranking. 😢</p>";
+        async function limparConversa() {
+            const token = localStorage.getItem('token_saas');
+            if (confirm("Resetar todo o histórico de mensagens?")) {
+                await fetch(`${API_URL}/api/chat/limpar`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                chatContainer.innerHTML = "";
+            }
         }
-    } catch (e) {
-        list.innerHTML = "<p>Erro de conexão. 🎀</p>";
-    }
-}
+
+        async function verRanking() {
+            const token = localStorage.getItem('token_saas');
+            document.getElementById('rankingModal').style.display = 'flex';
+            const list = document.getElementById('rankingList');
+            list.innerHTML = "<p style='text-align:center;'>Carregando... 🎀</p>";
+
+            try {
+                const res = await fetch(`${API_URL}/api/chat/ranking`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const jogadores = await res.json();
+                if (res.ok) {
+                    list.innerHTML = jogadores.map((p, i) => `
+                        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #ffe4f0; font-size: 13px;">
+                            <span>${i + 1}º <b>${p.nickname}</b></span>
+                            <span style="color: #ff69b4; font-weight: bold;">${p.xp} XP</span>
+                        </div>
+                    `).join('');
+                    if (jogadores.length === 0) list.innerHTML = "<p>Nenhum ponto registrado ainda! 🌸</p>";
+                } else {
+                    list.innerHTML = "<p>Erro ao buscar o ranking.</p>";
+                }
+            } catch (e) {
+                list.innerHTML = "<p>Erro de conexão.</p>";
+            }
+        }
+
         function addMessage(text, isUser, img = null) {
             const div = document.createElement('div');
             div.className = `message ${isUser ? 'user' : 'bot'}`;
             let html = `<div class="message-content">`;
-            if (img) html += `<img src="${img}" style="max-width:100%; border-radius:10px; margin-bottom:5px;"><br>`;
+            if (img) html += `<img src="${img}" style="max-width:100%; border-radius:10px; margin-bottom:6px;"><br>`;
             html += `<span>${isUser ? text : marked.parse(text)}</span></div>`;
             div.innerHTML = html;
-            document.getElementById('chatContainer').appendChild(div);
-            document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight;
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        async function executarLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const senha = document.getElementById('loginSenha').value;
-            const res = await fetch(`${API_URL}/api/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, senha })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                localStorage.setItem('token_saas', data.token);
-                localStorage.setItem('user_nome', data.nome);
-                userNickname = data.nome;
-                document.getElementById('authOverlay').style.display = 'none';
-                document.getElementById('txtBoasVindas').innerText = `Oi, ${userNickname}! 🎀`;
-            } else alert(data.erro);
-        }
-
-        function logout() { localStorage.clear(); location.reload(); }
-        window.onload = () => {
-            const t = localStorage.getItem('token_saas');
-            if(t) {
-                userNickname = localStorage.getItem('user_nome');
-                document.getElementById('authOverlay').style.display = 'none';
-                document.getElementById('txtBoasVindas').innerText = `Oi, ${userNickname}! 🎀`;
-            }
-        }
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
     </script>
-    <!-- Modal do Hall da Fama (Pop-up do Ranking) -->
-<div id="rankingModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center;" onclick="this.style.display='none'">
-    <div class="auth-card" style="width: 350px; position: relative;" onclick="event.stopPropagation()">
-        <h2 style="color: #ff69b4; margin-bottom: 15px;">🥇 Hall da Fama</h2>
-        <div id="rankingList" style="text-align: left; margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
-            <!-- Os jogadores aparecerão aqui -->
-        </div>
-        <button onclick="document.getElementById('rankingModal').style.display='none'" style="background: #ff69b4; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; cursor: pointer;">Fechar</button>
-    </div>
-</div>
 </body>
+
 </html>

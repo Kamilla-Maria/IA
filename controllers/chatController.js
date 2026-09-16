@@ -57,7 +57,7 @@ exports.falarComIA = async (req, res) => {
             }));
 
         // 2. Modelo CORRETO (Gemini 1.5 Flash)
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
         // 3. Inicia o chat
         const chat = model.startChat({
@@ -76,21 +76,17 @@ exports.falarComIA = async (req, res) => {
         let respostaFinal = "";
 
         // 5. Tratamento de Function Call (XP) corrigido
-        const call = response.candidates[0].content.parts.find(p => p.functionCall);
+        // 5. Tratamento de Function Call (XP)
+        const call = response.candidates[0]?.content?.parts?.find(p => p.functionCall);
         
         if (call) {
             const { name, args } = call.functionCall;
             if (name === "adicionarXP") {
-                const resXP = await adicionarXP(nickname, args.quantidade);
-                
-                // O segredo está aqui: enviamos a resposta da função de volta para a IA
-                const result2 = await chat.sendMessage([{
-                    functionResponse: {
-                        name: "adicionarXP",
-                        response: resXP
-                    }
-                }]);
-                respostaFinal = result2.response.text();
+                const qtd = args.quantidade || 50;
+                await adicionarXP(nickname, qtd);
+                respostaFinal = `Acertou em cheio, ${nickname}! 🎉 Você ganhou +${qtd} XP! 🎀✨ Clique no botão "Rank" para ver sua pontuação subir! Quer outra charada?`;
+            } else {
+                respostaFinal = response.text();
             }
         } else {
             respostaFinal = response.text();
@@ -128,7 +124,7 @@ exports.analisarImagem = async (req, res) => {
         const cloudRes = await uploadCloud();
 
         // Gemini Vision
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
         const imagePart = { inlineData: { data: arquivo.buffer.toString("base64"), mimeType: arquivo.mimetype } };
         
         const result = await model.generateContent([

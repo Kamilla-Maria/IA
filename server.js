@@ -1,12 +1,15 @@
-// 1. CARREGAMENTO DO AMBIENTE (ISSO DEVE SER A LINHA 1)
+// 1. CARREGAMENTO DO AMBIENTE
 require('dotenv').config(); 
+
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const chatRoutes = require('./routes/chatRoutes');
+const authRoutes = require('./routes/authRoutes');
 
-// 2. LOG DE TESTE (Para vermos se o link carregou)
 console.log("DEBUG: O link do banco carregado é:", process.env.MONGO_URI);
 
 const app = express();
@@ -23,23 +26,40 @@ if (!process.env.MONGO_URI) {
       .catch((err) => console.error('❌ Erro de conexão no banco:', err));
 }
 
-// No seu Back-end (server.js)
-app.delete('/api/chat/limpar', async (req, res) => {
+// ==========================================
+// AQUI ESTÁ O PRIMEIRO CÓDIGO (HEALTH CHECK)
+// ==========================================
+app.get('/api/health', async (req, res) => {
     try {
-        await Mensagem.deleteMany({}); // Apaga tudo do MongoDB
-        res.status(200).json({ sucesso: true });
-    } catch (err) {
-        res.status(500).json({ erro: "Erro ao limpar banco" });
+        const dbStatus = mongoose.connection.readyState === 1;
+
+        if (dbStatus) {
+            return res.status(200).json({
+                status: "ok",
+                bancoDeDados: "conectado",
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            return res.status(503).json({
+                status: "erro",
+                bancoDeDados: "desconectado",
+                timestamp: new Date().toISOString()
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({
+            status: "erro",
+            bancoDeDados: "erro ao consultar",
+            timestamp: new Date().toISOString()
+        });
     }
 });
-// 4. ROTAS
+
+// 4. ROTAS DA APLICAÇÃO
+app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
-
-// No server.js, junto com as outras rotas:
-const authRoutes = require('./routes/authRoutes');
-app.use('/api/auth', authRoutes);
