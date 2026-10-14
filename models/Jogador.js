@@ -5,4 +5,4 @@ const JogadorSchema = new mongoose.Schema({
     xp: { type: Number, default: 0 }
 });
 
-module.exports = mongoose.model('Jogador', JogadorSchema);
+module.exports = mongoose.models.Jogador || mongoose.model('Jogador', JogadorSchema);

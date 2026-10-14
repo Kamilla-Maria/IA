@@ -5,9 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hello Kitty Game Master 🎀</title>
-
-    <!-- Markdown para formatar respostas da IA -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <!-- 👇 ADICIONE AQUI A BIBLIOTECA DO SOCKET.IO CLIENT 👇 -->
+    <script src="/socket.io/socket.io.js"></script>
+
 
     <style>
         * {
@@ -348,14 +350,72 @@
         </div>
     </div>
 
+    
     <script>
-        // Em produção na Vercel deixe ''; localmente pode ser '' ou 'http://localhost:3000'
-        const API_URL = '';
+        
+       const API_URL = '';
 
+        // 👇 2. VARIÁVEL DO SOCKET VAZIA POR ENQUANTO 👇
+        let socket; 
+
+        // --- 3. VARIÁVEIS DA TELA ---
         let userNickname = "";
         const chatContainer = document.getElementById('chatContainer');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
+
+        // 👇 4. FUNÇÃO PARA CONECTAR AO SOCKET (Só é chamada após o login) 👇
+        function iniciarConexaoSegura() {
+            // Pega o token que foi salvo no Login
+            const token = localStorage.getItem('token_saas');
+
+            // Conecta passando o Token JWT como "auth"
+            socket = io(API_URL || window.location.origin, {
+                auth: { token: token }
+            });
+
+            // Fica ouvindo as mensagens da sala
+            socket.on('mensagemRecebida', (dados) => {
+                const ehUsuarioLogado = dados.nickname === userNickname;
+                if (dados.isBot) {
+                    addMessage(`🎀 **${dados.nickname}**: ${dados.message}`, false);
+                } else {
+                    addMessage(`**${dados.nickname}**: ${dados.message}`, ehUsuarioLogado);
+                }
+            });
+
+            // (Opcional) Mostra se deu erro de permissão
+            socket.on("connect_error", (err) => {
+                console.error("Erro na conexão do WebSocket:", err.message);
+                if(err.message.includes('Token') || err.message.includes('Acesso')) {
+                    alert("Sua sessão expirou, faça login novamente.");
+                    logout();
+                }
+            });
+        }
+
+        // --- GESTÃO DE TELAS E AUTO-LOGIN ---
+        window.onload = () => {
+            checarSaudeAPI();
+            const token = localStorage.getItem('token_saas');
+            const nome = localStorage.getItem('user_nome');
+
+            if (token && nome) {
+                userNickname = nome;
+                entrarNoApp(); // Aqui ele entra e conecta!
+                addMessage(`Bom te ver de novo, **${userNickname}**! ✨`, false);
+            }
+        };
+
+        function entrarNoApp() {
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('txtBoasVindas').innerText = `Bem-vinda(o), ${userNickname}! 💕`;
+            messageInput.disabled = false;
+            sendBtn.disabled = false;
+            
+            // 👇 CHAMA A FUNÇÃO DE CONECTAR QUANDO ENTRA NO APP 👇
+            iniciarConexaoSegura(); 
+        }
 
         function alternarAuth(mostrarCadastro) {
             document.getElementById('loginForm').classList.toggle('hidden', mostrarCadastro);
@@ -469,7 +529,88 @@
             document.getElementById('previewContainer').style.display = 'none';
         }
 
-        async function sendMessage() {
+       async function sendMessage() {
+            const text = messageInput.value.trim();
+            const file = document.getElementById('fileInput').files[0];
+            const token = localStorage.getItem('token_saas');
+
+            if (!text && !file) return;
+
+            // Se o usuário enviar uma IMAGEM, mantemos a lógica antiga usando fetch
+            if (file) {
+                addMessage(text || "Enviou uma imagem", true, document.getElementById('previewImg').src);
+                messageInput.value = '';
+                cancelarImg();
+
+                const fd = new FormData();
+                fd.append('image', file);
+                fd.append('prompt', text);
+                fd.append('nickname', userNickname);
+
+                try {
+                    const res = await fetch(`${API_URL}/api/chat/vision`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: fd
+                    });
+                    if (res.status === 401) { logout(); return; }
+                    const data = await res.json();
+                    addMessage(data.resposta, false, data.imageUrl);
+                } catch (e) {
+                    addMessage("Erro ao conversar com a Hello Kitty. 😢", false);
+                }
+            } 
+            // Se for APENAS TEXTO, usamos o WebSockets (novaMensagem)
+            else {
+                // Aqui está o socket.emit! Dispara a mensagem para o servidor
+                socket.emit('novaMensagem', {
+                    nickname: userNickname,
+                    message: text
+                });
+                
+                // Limpa a caixinha de texto
+                messageInput.value = '';
+            }
+        }
+           
+            if (!text && !file) return;
+
+            // Lógica 1: Se tiver IMAGEM, mantemos o fetch normal da sua API Vision
+            if (file) {
+                addMessage(text || "Enviou uma imagem", true, document.getElementById('previewImg').src);
+                messageInput.value = '';
+                cancelarImg();
+
+                const fd = new FormData();
+                fd.append('image', file);
+                fd.append('prompt', text);
+                fd.append('nickname', userNickname);
+
+                try {
+                    const res = await fetch(`${API_URL}/api/chat/vision`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: fd
+                    });
+                    if (res.status === 401) { logout(); return; }
+                    const data = await res.json();
+                    addMessage(data.resposta, false, data.imageUrl);
+                } catch (e) {
+                    addMessage("Erro ao conversar com a Hello Kitty. 😢", false);
+                }
+            } 
+            // Lógica 2: Se for APENAS TEXTO, usamos o WebSockets (Lógica do Tech Lead)
+            else {
+                // Dispara para o servidor espalhar a mensagem
+                socket.emit('novaMensagem', {
+                    nickname: userNickname,
+                    message: text
+                });
+                
+                // Limpa o input (a mensagem vai aparecer na tela quando o socket.on receber do servidor)
+                messageInput.value = '';
+            }
+        
             const text = messageInput.value.trim();
             const file = document.getElementById('fileInput').files[0];
             const token = localStorage.getItem('token_saas');
@@ -514,7 +655,7 @@
             } catch (e) {
                 addMessage("Erro ao conversar com a Hello Kitty. 😢", false);
             }
-        }
+    
 
         async function limparConversa() {
             const token = localStorage.getItem('token_saas');

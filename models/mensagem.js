@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const MensagemSchema = new mongoose.Schema({
     role: { 
         type: String, 
-        required: true // 'user' ou 'model'
+        required: true 
     },
     parts: [{
         text: { type: String }
@@ -14,4 +14,5 @@ const MensagemSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('Mensagem', MensagemSchema);
+// Protege contra duplicação de compilação do Mongoose
+module.exports = mongoose.models.Mensagem || mongoose.model('Mensagem', MensagemSchema);
